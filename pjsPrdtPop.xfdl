@@ -1,0 +1,223 @@
+/**
+*  SYSTEM FORM NAME
+*
+*  @MenuPath    1Depth > 2Depth
+*  @FileName    *.xfdl 
+*  @Creator     박준서
+*  @CreateDate  yyyy.MM.DD 
+*  @Version     1.0
+*  @Desction    설명
+* 
+************** 소스 수정 이력 *************************************************
+*    Date          Modifier            Description
+*******************************************************************************
+*  2021.01.11      박준서             최초 생성 
+*  2021.01.22      박준서             tab으로 변경, crud 연결
+*******************************************************************************
+*/
+
+//공통 라이브러리 호출
+
+/*********************************************************
+ * 1.1 FORM 변수 선언 영역
+ ********************************************************/
+this.fv_sProjectCd = nexacro.getApplication().av_sProjectCd;
+var div = this.tabSearch.tabSearch2.form.divSearch1.form; 
+/*********************************************************
+* 1.2 FORM EVENT 영역(onload등)
+********************************************************/
+/**
+* Form_onload 최초 로드시 발생되는 이벤트 (필수)
+*/
+this.Form_onload = function(obj:Form, e:nexacro.LoadEventInfo)
+{
+   if (take.formOnLoad(this)) //공통 온로드(필수) : 최초 온로드시 공통으로 호출되는 함수 --> 필수
+   {    
+        this.fnInit();
+		
+   }
+}
+
+/****************************************************************************************
+* 2 필수 FUNCTION 영역 (fnInit, fnSearch, fnSave, fnAddRow, fnDelRow, fnExcel, fnPrint)
+****************************************************************************************/
+/**
+ * fnInit : 초기화 함수 검색조건 초기화 및 온로드 세팅
+ * @return {N/A}    N/A
+ * @example this.fnInit();
+ */
+this.fnInit = function()
+{
+	this.fnCommonCode();
+	// 최초 저장 벨리데이션 추가
+	
+	takeval.add(this, "Save", div.edtPrdtCd, div.staPrdtCdT.text, "value", true, "string", "", "");
+	takeval.add(this, "Save", div.edtPrdtNm, div.staPrdtNmT.text, "value", true, "string", "", "");
+
+// 검색조건을 Dataset으로 넘기는 방법 -> 현재는 파라미터로 넘기고 있음
+// 	if(!take.isEmpty(this.getOwnerFrame().sArg1))
+// 		//this.dsSearch.setColumn(nRow, "PROJECT_CD", this.getOwnerFrame().sArg1);
+// 		this.dsCust.setColumn(0,"PROJECT_CD",this.getOwnerFrame().sArg1);
+// 	if(!take.isEmpty(this.getOwnerFrame().sArg2))
+// 		//this.dsSearch.setColumn(nRow, "CUST_CD", this.getOwnerFrame().sArg2);
+// 		this.dsCust.setColumn(0,"CUST_CD",this.getOwnerFrame().sArg1);
+// 	else
+
+//품목 코드가 안넘어왔으면 신규등록, 넘어왔으면 조회
+	if(take.isEmpty(this.getOwnerFrame().sArg2)){
+		this.dsPrdt.addRow();
+		div.edtPrdtCd.set_enable(true);
+		this.tabSearch.tabSearch1.form.divSearch1.form.edtPrdtCd.set_enable(true);
+		
+	}else{
+		this.fnSearch();
+	}
+}
+/**
+ * fnSearch : 조회 transaction (필수) --> 공통 조회에서 호출할 디폴트값 세팅 필요
+ * @param  {String} sTranId 트랜젝션 아이디
+ * @return {N/A}    N/A
+ * @example this.fnSearch("ID");
+ */
+this.fnSearch = function(sTranId)
+{
+    //공통 조회에서 호출할 디폴트값 세팅 필요
+    if (take.nvl(sTranId, "")=="") sTranId = "search";
+	//검색조건 파라미터로 넘기는 방법
+	var sParam = "PROJECT_CD=" +this.getOwnerFrame().sArg1;
+	sParam += " PRDT_CD=" + this.getOwnerFrame().sArg2;
+	take.tranSelect(this,sTranId, "Prdt.prdtInfoDetail","", "dsPrdt", sParam, "fnCallBack");
+}
+
+/**
+ * fnSave : 저장 transaction (필수) -->공통 저장에서 호출할 디폴트값 세팅 필요
+ * @param  {String} sTranId 트랜젝션 아이디
+ * @return {N/A}    N/A
+ * @example this.fnSave("ID");
+ */
+ 
+this.fnSave = function(sTranId)
+{    	
+// 	if(this.dsPrdt.getRowType(0)== 2){
+// 		take.alert(this, "Info", "신규등록화면입니다.", "");
+// 	}else if(this.dsPrdt.getRowType(0)== 4){
+// 		take.alert(this, "Info", "수정화면입니다.", "");
+// 	}
+    //공통 조회에서 호출할 디폴트값 세팅 필요
+	if (take.nvl(sTranId, "")=="") sTranId = "Save";
+	
+	if( !takeval.check(this, "Save") ){
+		return false;
+	}
+ 	if(this.dsPrdt.getRowType(0)== 2){
+ 		this.dsPrdt.setColumn(0, "PROJECT_CD", this.fv_sProjectCd); // 신규 등록시 초기화
+ 		this.dsPrdt.setColumn(0, "PRDT_CD"	 , div.edtPrdtCd.value);
+ 		this.dsPrdt.setColumn(0, "PRDT_NM"   , div.edtPrdtNm.value);
+ 		this.dsPrdt.setColumn(0, "USE_YN"	 , "Y");
+// 		//this.dsPrdt.setColumn(0, "PRDT_GROUP_ID", div.cmbCustGroupId.value); //사용안하기로함
+// 		this.dsPrdt.setColumn(0, "BARCODE"		, div.edtBarcode.value);
+// 		this.dsPrdt.setColumn(0, "IN_PRICE"		, div.edtInPrice.value);
+// 		this.dsPrdt.setColumn(0, "OUT_PRICE"	, div.edtOutPrice.value);
+// 		this.dsPrdt.setColumn(0, "VAT_YN"		, div.edtCustFax.value);
+// 		this.dsPrdt.setColumn(0, "MEMO"	, div.edtCustEmail.value);
+// 		this.dsPrdt.setColumn(0, "IN_CUST_CD", div.edtInCustCd.value);
+// 		this.dsPrdt.setColumn(0, "OUT_CUST_CD"	, div.edtOutCustCd.value);
+// 		this.dsPrdt.setColumn(0, "SEARCH_KEYWORD"	, div.edtSrchKey.value);
+
+ 	}
+    take.tranSave(this,sTranId,"Prdt.prdtInfo","dsPrdt", "","", "fnCallBack");
+}
+
+/*********************************************************
+ * 3 각 COMPONENT 별 EVENT 영역
+ ********************************************************/
+//component_onclick : ~ 버튼 클릭
+
+this.btn_save_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fnSave();
+};
+
+/*********************************************************
+ * 4 사용자 FUNCTION 영역
+ ********************************************************/
+/**
+ * fnUserFunction : 사용자 함수
+ * @param  {String} sParam 문자형 인자
+ * @param  {Number} nParam 숫자형 인자
+ * @example this.fnUserFunction(sParam, nParam);
+ */
+/**
+ * fnCommonCode : 코드호출 함수
+ * @param  {String} N/A 
+ * @example this.fnCommonCode();
+ */
+this.fnCommonCode = function ()
+{
+    take.tranCode(
+        this,                           						//현재 Form 객체
+        ["00009"],    						 //CODE_INFO TABLE의 그룹키 값 (배열로 여러개 가능)
+        ["dsCboUseYn"],       //Indataset : 서버에서 받을 데이터셋 (배열로 여러개 가능 그룹키 값과 배열갯수가 동일해야함)
+        ["SEL",],                        //콤보등에 사용될 경우 첫번째 세팅 값("ALL":전체, "SEL":선택, "":사용안함)(배열로 여러개 가능 그룹키 값과 배열갯수가 동일해야함)
+        function(sId, nErrCd, sErrMsg)  //Call Back 함수(함수 명으로도 사용 가능 ex:"fnCallBack")
+        {
+            //sId     : Transaction Id
+            //nErrCd  : Return Code (0보다 작으면 오류)
+            //sErrMsg : Return Message
+            
+            //사용여부 공통코드 데이터가 있는지 여부
+			
+			if (this.dsCboUseYn.rowcount > 0)
+            {
+                //사용여부 검색조건 콤보에 첫번째 값 세팅
+                div.cboUseYn;
+            }
+			
+		},
+        false                            //동기(false),비동기(true) 여부 기본값은 비동기
+    );
+}
+
+
+/*********************************************************
+ * 5 TRANSACTION OR CALLBACK 콜백 처리부분
+ ********************************************************/
+/**
+* fnCallback : transaction callBack
+* @param  : sId      - 서비스 아이디 (공통 콜백에서 넘어옴)
+* @param  : nErrCd   - 에러코드 (공통 콜백에서 넘어옴)
+* @param  : sErrMsg  - 에러메세지 (공통 콜백에서 넘어옴)
+* @return : N/A
+* @example :  
+*/
+this.fnCallBack = function(sId, nErrCd, sErrMsg)
+{
+    //Transaction 에러는 공통에서 처리
+    
+    //Transaction은 성공이나 실제 처리된게 없을 경우 처리
+    if( sErrMsg == "SUCC" )
+    {
+        //Success Script      
+    } else {
+        //Etc Script
+    }   
+    
+    switch(sId)
+    {
+        case "Save" : //저장 콜백
+            //Script
+			take.alert(this, "Info", "저장이 완료되었습니다.","");
+			this.close();
+            break;
+        default :
+            break;
+			
+	}
+	
+        
+}
+// divButton.form.btnReset
+this.divButton_btnReset_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	
+};
