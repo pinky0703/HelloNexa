@@ -1,0 +1,329 @@
+
+
+/*********************************************************
+ * 1.1 FORM 변수 선언 영역
+ ********************************************************/
+this.fv_sProjectCd = nexacro.getApplication().av_sProjectCd;
+/*********************************************************
+ * 1.2 FORM EVENT 영역(onload등)
+ ********************************************************/
+/**
+* Form_onload 최초 로드시 발생되는 이벤트 (필수)
+*/
+this.Form_onload = function(obj:Form, e:nexacro.LoadEventInfo)
+{
+    if (take.formOnLoad(this, true)) //공통 온로드(필수) : 최초 온로드시 공통으로 호출되는 함수 --> 필수
+    {
+         //초기화
+        this.fnInit();
+		}
+}
+
+/*********************************************************
+ * 2 필수 FUNCTION 영역 (fnInit, fnSearch, fnSave, fnAddRow, fnDelRow, fnExcel, fnPrint)
+ ********************************************************/
+/**
+ * fnInit : 초기화 함수 검색조건 초기화 및 온로드 세팅
+ * @return {N/A}    N/A
+ * @example this.fnInit();
+ */
+this.fnInit = function()
+{
+	this.fnCommonCode();
+	this.fnBtnRoleSetting();
+	this.fnSearch();
+	alert(take.getActiveForm(this).titletext);
+}
+
+/**
+ * fnSearch : 조회 transaction (필수) --> 공통 조회에서 호출할 디폴트값 세팅 필요
+ * @param  {String} sTranId 트랜젝션 아이디
+ * @return {N/A}    N/A
+ * @example this.fnSearch("ID");
+ */
+this.fnSearch = function(sTranId)
+{
+//공통 조회에서 호출할 디폴트값 세팅 필요
+    if (take.nvl(sTranId, "")=="") sTranId = "Search";
+	sParam =  "PROJECT_CD=" + this.fv_sProjectCd;
+	this.dsCust.clearData();
+    take.tranSelect(this, "Search", "Cust.custInfoDetail", "dsSearch", "dsCust", sParam, "fnCallback");
+}
+
+/**
+ * fnSave : 저장 transaction (필수) -->공통 저장에서 호출할 디폴트값 세팅 필요
+ * @param  {String} sTranId 트랜젝션 아이디
+ * @return {N/A}    N/A
+ * @example this.fnSave("ID");
+ */
+this.fnSave = function(sTranId)
+{
+
+}
+
+/**
+ * fnAddRow : 행 추가 함수 (필수)--> 공통 행추가에서 호출할 디폴트값 세팅 필요
+ * @param  {String} sGridId 그리드 아이디
+ * @param  {Number} nRow    addRow 리턴값(추가된 행 위치)
+ * @example this.fnAddRow(sGrdId, nRow);
+ */
+this.fnAddRow = function(sGrdId, nRow)
+{
+// 	var oArg = {
+// 				sArg1 : obj.getBindDataset().getColumn(e.row, "PROJECT_CD")
+// 			  , sArg2 : obj.getBindDataset().getColumn(e.row, "CUST_CD")
+// 		};
+	take.openPopup(this, "ojy020P01", "yoon::ojy020P01.xfdl", "","", 
+	function(){
+		this.fnSearch();
+	});
+}
+
+/**
+ * fnDelRow : 행 삭제 함수 (필수) --> 공통 행삭제에서 호출할 디폴트값 세팅 필요
+ * @param  {String} sGridId 그리드 아이디
+ * @param  {Anonymous} aRow    deleteRow 리턴값
+ * @return {N/A} N/A
+ * @example this.fnDelRow(sGrdId, nRow); 
+ */
+this.fnDelRow = function(sGrdId,aRow)
+{ 
+     //공통 행추가에서 호출할 디폴트값 세팅
+    if (take.nvl(sGrdId, "")=="") sGrdId = "grdDetail";
+    
+    //변수 선언
+	var objDs;
+	var bRtn = true;
+    var nCnt, nRow;
+	
+    //변수에 값 세팅
+    objDs = this.dsCust;       //행 삭제할 데이터셋
+	//현재 체크된 row 받기
+	aRow = take.nvl(take.getChkRow(objDs, "CHK"), "");
+    if(aRow!=""){ 
+		var bConfirm = take.confirm(this, "", "삭제 하시겠습니까?");
+		if(bConfirm){
+			//배열의 갯수
+			nCnt = aRow.length;
+			
+			//배열 수 만큼 반복
+			for (var i=0; i<nCnt; i++)
+			{
+				//행
+				nRow = aRow[i];
+				
+				//행 삭제
+				bRtn = objDs.deleteRow(nRow);
+				
+				//행 삭제 실패시 for문 중지
+				if (bRtn==false)break;
+			}
+		
+			//행 삭제 성공
+			if (bRtn)
+			{
+				take.tranSave(this, "Save", "Cust.custInfo", "dsCust", "", "", "fnCallback");
+				//삭제 성공후 추가 로직 있을경우
+				take.msg(this, "info", nCnt + "건이 삭제되었습니다. ");
+			}
+// 			else { //삭제 실패
+// 				take.alert(this, "Info", nRow+1) + "행 삭제에 실패하였습니다.", "");
+// 				//삭제 실패 행으로 이동
+// 				objDs.set_rowposition(nRow);
+// 			}
+		}else take.alert(this, "Info", "삭제 취소하였습니다.", "");
+		
+	}else{
+		take.alert(this, "Info", "선택된 항목이 없습니다.", "");
+		return false;
+	}
+}
+
+/**
+ * fnExcel : 엑셀 다운로드 함수 (필수) --> 공통 엑셀 다운로드에서 호출할 디폴트값 세팅 필요
+ * @param  {String} sGridId 그리드 아이디
+ * @return {N/A} N/A
+ * @example this.fnExcel(sGrdId, nRow); 
+ */
+this.fnExcel = function(sGrdId)
+{
+    //ExportExcelGrid 파일명, 시트명, 타이틀명
+	this.divDetail.form.grdDetail.ExportExcelGrid( 
+        "custList",
+		"custList",
+		"거래처 목록");
+}
+
+/**
+ * fnPrint : 출력 함수 (필수)
+ * @param  {N/A} N/A
+ * @return {N/A} N/A
+ * @example this.fnPrint(); 
+ */
+this.fnPrint = function()
+{    
+    //출력없음
+    return false;
+}
+
+/*********************************************************
+ * 3 각 COMPONENT 별 EVENT 영역
+ ********************************************************/
+//검색버튼 클릭 이벤트
+this.pDivSearch_btnSearch_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	this.fnSearch();
+};
+
+this.grdLink_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInfo)
+{
+	var bindName = take.getBindColName(obj, e.cell);
+	if(bindName == "CUST_CD"){
+		var oArg = {
+					sArg1 : obj.getBindDataset().getColumn(e.row, "PROJECT_CD")
+				  , sArg2 : obj.getBindDataset().getColumn(e.row, "CUST_CD")
+			};
+		take.openPopup(this, "ojy020P01", "yoon::ojy020P01.xfdl", oArg,"", 
+		function(){
+			this.fnSearch("custList");
+		});
+	}
+};
+
+//공통버튼 클릭
+this.commonbtn_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
+{
+	var div = this.divButton.form;
+	switch(obj){
+		case div.btnAdd:
+			this.fnAddRow();
+			break;
+		case div.btnDel:
+			this.fnDelRow();
+			break;
+		case div.btnSave:
+			this.fnSave();
+			break;
+		case div.btnPrint:
+			this.fnPrint();
+			break;
+		default:
+			break;
+	}
+};
+
+/*********************************************************
+ * 4 사용자 FUNCTION 영역
+ ********************************************************/
+/**
+ * fnCommonCode : 코드호출 함수
+ * @param  {String} N/A 
+ * @example this.fnCommonCode();
+ */
+this.fnCommonCode = function ()
+{
+    take.tranCode(
+        this,                           //현재 Form 객체
+        ["00009", ""],                      //CODE_INFO TABLE의 그룹키 값 (배열로 여러개 가능)
+        ["dsCboUseYn"],                 //Indataset : 서버에서 받을 데이터셋 (배열로 여러개 가능 그룹키 값과 배열갯수가 동일해야함)
+        ["SEL",],                        //콤보등에 사용될 경우 첫번째 세팅 값("ALL":전체, "SEL":선택, "":사용안함)(배열로 여러개 가능 그룹키 값과 배열갯수가 동일해야함)
+        function(sId, nErrCd, sErrMsg)  //Call Back 함수(함수 명으로도 사용 가능 ex:"fnCallBack")
+        {
+            //sId     : Transaction Id
+            //nErrCd  : Return Code (0보다 작으면 오류)
+            //sErrMsg : Return Message
+            
+//             //사용여부 공통코드 데이터가 있는지 여부
+//             if (this.dsCboUseYn.rowcount > 0)
+//             {
+//                 //사용여부 검색조건 콤보에 첫번째 값 세팅
+//                 pDivSearch.form.tabSearch.tabSearch1.form.divSearch1.form.cboUseYn.set_index(0);
+//             }
+        },
+        false                            //동기(false),비동기(true) 여부 기본값은 비동기
+    );
+}
+
+
+this.fnBtnRoleSetting = function()
+{
+// 	this.alert("등록 : "+take.getActiveForm(this).dsBtnRole.getColumn(0, "R_INPUT")
+// 	+"조회 : "+take.getActiveForm(this).dsBtnRole.getColumn(0, "R_READ")
+// 	+"삭제 : "+take.getActiveForm(this).dsBtnRole.getColumn(0, "R_DELETE")
+// 	+"저장 : "+take.getActiveForm(this).dsBtnRole.getColumn(0, "R_SAVE")
+// 	);
+	var div = this.divButton.form;
+    var arrBtn = {"INPUT":div.btnAdd, "DELETE":div.btnDel, "SAVE":div.btnSave, "PRINT":div.btnPrint};
+	var nLeft = 1, nInterval = 3;
+	var arrBtnRole = ["INPUT", "DELETE", "SAVE", "PRINT"]; //조회, 신규, 삭제, 저장, 인쇄
+    
+	for( var i=0; i<arrBtnRole.length; i++ )
+	{
+		var sId = arrBtnRole[i];
+		var sRole = take.nvl(take.getActiveForm(this).dsBtnRole.getColumn(0,"R_"+sId),"");
+		var objBtn = arrBtn[sId];
+		if (sRole == "N")
+		{
+			//nInterval = 0;
+			objBtn.set_visible(false);
+			objBtn.set_width(0);
+		} else {
+			/*nInterval = 5;*/
+			objBtn.set_left(nLeft);
+			nLeft = parseInt(objBtn.left) + parseInt(objBtn.width) + nInterval;
+			
+			objBtn.set_visible(true);							
+ 		}
+	}
+	this.resetScroll();
+};
+
+
+/*********************************************************
+ * 5 TRANSACTION OR CALLBACK 콜백 처리부분
+ ********************************************************/
+/**
+* fnCallBack : transaction callback
+* @param  : sId      - 서비스 아이디 (공통 콜백에서 넘어옴)
+* @param  : nErrCd   - 에러코드 (공통 콜백에서 넘어옴)
+* @param  : sErrMsg  - 에러메세지 (공통 콜백에서 넘어옴)
+* @return : N/A
+* @example :  
+*/
+this.fnCallBack = function(sId, nErrCd, sErrMsg)
+{
+    //Transaction 에러는 공통에서 처리
+    
+    //Transaction은 성공이나 실제 처리된게 없을 경우 처리
+    if( sErrMsg == "SUCC" )
+    {
+        //Success Script      
+    } else {
+        //Etc Script
+    }   
+    
+    switch(sId)
+    {
+        case "Search" : //조회 콜백
+			this.divDetail.form.grdMain.selectRow(-1);
+			var nFRow = this.dsCust.findRowAsNF("CUST_CD", this.fv_sSaveUserCd);
+			if( nFRow != -1 ) {
+				this.divDetail.form.grdMain.selectRow(nFRow);
+			} else {
+				if(this.dsCust.getRowCount() > 0){
+					this.divDetail.form.grdMain.selectRow(0);
+				}
+			}
+			this.divDetail.form.staTitle.set_text("거래처 목록 (총 " + this.dsCust.rowcount + "건)");
+			take.msg(this, "info", "거래처 목록 " + this.dsCust.rowcount + "건이 조회되었습니다. ");
+            break;
+			
+		
+        default :
+            break;
+			
+		
+    }        
+} 
+
+
