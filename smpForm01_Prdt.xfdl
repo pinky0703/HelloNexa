@@ -18,6 +18,7 @@
 *******************************************************************************
 */
 
+
 /*********************************************************
  * 1.1 FORM 변수 선언 영역
  ********************************************************/
@@ -32,9 +33,9 @@ this.Form_onload = function(obj:Form, e:nexacro.LoadEventInfo)
 {
     if (take.formOnLoad(this, true)) //공통 온로드(필수) : 최초 온로드시 공통으로 호출되는 함수 --> 필수
     {
-        //초기화
+         //초기화
         this.fnInit();
-    }
+		}
 }
 
 /*********************************************************
@@ -67,35 +68,16 @@ this.fnSearch = function(sTranId)
 	this.dsPrdt.clearData();
     take.tranSelect(this, "Search", "Prdt.prdtInfoDetail", "dsSearch", "dsPrdt", sParam, "fnCallback");
 }
+
 /**
  * fnSave : 저장 transaction (필수) -->공통 저장에서 호출할 디폴트값 세팅 필요
  * @param  {String} sTranId 트랜젝션 아이디
  * @return {N/A}    N/A
  * @example this.fnSave("ID");
  */
- 
 this.fnSave = function(sTranId)
 {
-     //공통 조회에서 호출할 디폴트값 세팅 필요
-    if (take.nvl(sTranId, "")=="") sTranId = "Save";
-    //데이터셋 수정 여부 확인
-    if (!take.isDsModified(this.dsPrdt))
-    {
-        take.alert(this, "Info", "변경된 데이터가 없습니다.");
-        return false;
-    }
-    sParam =  "PROJECT_CD=" + this.fv_sProjectCd;
-	//데이터 저장
-	take.tranSave(
-		this,                //현재 Form 객체
-		sTranId,             //Transaction Id
-		"Prdt.prdtInfo",  //sqlMapperId (smpForm01Insert, smpForm01Delete, smpForm01Update 3개가 있어야 하고 뒤에 insert, delete, update는 자동으로 호출됨)
-		"dsPrdt",            //Indataset(서버로 보낼 dataset)
-		"",                  //Outdataset(서버에서 받을 dataset)
-		sParam,                  //Parameter
-		"fnCallBack"         //Call Back 함수명 (함수를 바로 사용 가능)
-	);
-
+	
 }
 
 /**
@@ -110,13 +92,11 @@ this.fnAddRow = function(sGrdId, nRow)
 // 				sArg1 : obj.getBindDataset().getColumn(e.row, "PROJECT_CD")
 // 			  , sArg2 : obj.getBindDataset().getColumn(e.row, "PRDT_CD")
 // 		};
-
-	take.openPopup(this, "sampleGridLinkPopup", "jun::sampleGridLinkPopup.xfdl", "","", 
+	take.openPopup(this, "pjsPrdtPop", "jun::pjsPrdtPop.xfdl", "","", 
 	function(){
 		this.fnSearch();
 	});
 }
-
 
 /**
  * fnDelRow : 행 삭제 함수 (필수) --> 공통 행삭제에서 호출할 디폴트값 세팅 필요
@@ -128,7 +108,7 @@ this.fnAddRow = function(sGrdId, nRow)
 this.fnDelRow = function(sGrdId,aRow)
 { 
      //공통 행추가에서 호출할 디폴트값 세팅
-    if (take.nvl(sGrdId, "")=="") sGrdId = "divDetail";
+    if (take.nvl(sGrdId, "")=="") sGrdId = "grdDetail";
     
     //변수 선언
 	var objDs;
@@ -177,20 +157,7 @@ this.fnDelRow = function(sGrdId,aRow)
 		return false;
 	}
 }
-/**
- * fnExcel : 엑셀 다운로드 함수 (필수) --> 공통 엑셀 다운로드에서 호출할 디폴트값 세팅 필요
- * @param  {String} sGridId 그리드 아이디
- * @return {N/A} N/A
- * @example this.fnExcel(sGrdId, nRow); 
- */
-this.fnExcel = function(sGrdId)
-{
-    //ExportExcelGrid 파일명, 시트명, 타이틀명
-	this.divDetail.form.gridLink.ExportExcelGrid( 
-        "prdtList",
-		"prdtList",
-		"품목 목록");
-}
+
 
 /**
  * fnPrint : 출력 함수 (필수)
@@ -221,7 +188,7 @@ this.grdLink_oncellclick = function(obj:nexacro.Grid,e:nexacro.GridClickEventInf
 					sArg1 : obj.getBindDataset().getColumn(e.row, "PROJECT_CD")
 				  , sArg2 : obj.getBindDataset().getColumn(e.row, "PRDT_CD")
 			};
-		take.openPopup(this, "sampleGridLinkPopup", "jun::sampleGridLinkPopup.xfdl", oArg,"", 
+		take.openPopup(this, "pjsPrdtPop", "jun::pjsPrdtPop.xfdl", oArg,"", 
 		function(){
 			this.fnSearch("prdtList");
 		});
@@ -249,6 +216,7 @@ this.commonbtn_onclick = function(obj:nexacro.Button,e:nexacro.ClickEventInfo)
 			break;
 	}
 };
+
 /*********************************************************
  * 4 사용자 FUNCTION 영역
  ********************************************************/
@@ -281,6 +249,7 @@ this.fnCommonCode = function ()
     );
 }
 
+
 this.fnBtnRoleSetting = function()
 {
 // 	this.alert("등록 : "+take.getActiveForm(this).dsBtnRole.getColumn(0, "R_INPUT")
@@ -289,7 +258,7 @@ this.fnBtnRoleSetting = function()
 // 	+"저장 : "+take.getActiveForm(this).dsBtnRole.getColumn(0, "R_SAVE")
 // 	);
 	var div = this.divButton.form;
-    var arrBtn = {"INPUT":div.btnAdd, "DELETE":div.btnDel, "SAVE":div.btnSave, "PRINT":div.btnPrint};
+    var arrBtn = {"INPUT":div.btnAdd, "DELETE":div.btnDel, "SAVE": div.btnSave, "PRINT":div.btnPrint};
 	var nLeft = 1, nInterval = 3;
 	var arrBtnRole = ["INPUT", "DELETE", "SAVE", "PRINT"]; //조회, 신규, 삭제, 저장, 인쇄
     
@@ -313,7 +282,6 @@ this.fnBtnRoleSetting = function()
 	}
 	this.resetScroll();
 };
-
 
 
 /*********************************************************
@@ -350,7 +318,7 @@ this.fnCallBack = function(sId, nErrCd, sErrMsg)
 				if(this.dsPrdt.getRowCount() > 0){
 					this.divDetail.form.grdMain.selectRow(0);
 				}
-			}
+			} 
 			this.divDetail.form.staTitle.set_text("품목 목록 (총 " + this.dsPrdt.rowcount + "건)");
 			take.msg(this, "info", "품목 목록 " + this.dsPrdt.rowcount + "건이 조회되었습니다. ");
             break;
@@ -360,315 +328,5 @@ this.fnCallBack = function(sId, nErrCd, sErrMsg)
             break;
 			
 		
-    }
-}
-/* 그리드 페이징 기능 추가 ! 
- * File Name   : np_Grid_Format_Paging_filter.xfdl
- * Description : Grid를 이용한 페이징처리1
- */
-
-this.fv_nTotCount   = 0;	// 전체레코드수
-this.fv_nStart		= 1;   	// 시작 번호
-this.fv_nEnd		= 10;   // 끝 번호
-this.fv_nNowPage    = 1;   	// 현재 페이지
-this.fv_nPageSize	= 10;   // 한페이지 최대 레코드수
-this.fv_nPageScale	= 10;	// 화면 최대 페이지수
-this.fv_nTotPage    = 0;	// 전체페이지수
-
-/*  버튼클릭  */
-this.btn_execute_onclick = function(obj:Button,  e:nexacro.ClickEventInfo)
-{		
-    this.dsPrdt.filter("");
-    this.fv_nNowPage = 1;
-    this.fv_nTotCount  = this.dsPrdt.getRowCount();	// 전체레코드수
-    this.fn_retrieve();
-};
-
-/*  onitemchanged  - 페이지 선택*/
-this.cmb_input2_onitemchanged = function(obj:Combo, e:nexacro.ItemChangeEventInfo)
-{
-	this.fv_nNowPage  =  this.cmb_input2.value;
-    this.fn_retrieve();
-};
-
-/*
- * Function Name : fn_retrieve
- * Description   : 서버에서 조회한것처럼 원본에서 filter 처리
- * Parameter     : 
- * Return        : 
- * Example       : fn_retrieve();
- */
-this.fn_retrieve = function()
-{			
-    var nStrat = parseInt((this.fv_nNowPage - 1) / this.fv_nPageScale) * (this.fv_nPageScale * this.fv_nPageSize) + 1;
-    var nEnd   = parseInt((this.fv_nNowPage - 1) / this.fv_nPageScale) * (this.fv_nPageScale * this.fv_nPageSize) + (this.fv_nPageScale * this.fv_nPageSize);
-
-    this.dsPrdt.filter("COL0 >= " + nStrat + " && COL0 <= " + nEnd);				
-
-    this.fn_makePage();	
-    this.fn_Paging();            
-};
-
-/*
- * Function Name : fn_Paging
- * Description   : 페이지 번호 클릭시 filter 처리
- * Parameter     : 
- * Return        : 
- * Example       : fn_Paging();
- */
-this.fn_Paging = function()
-{
-    this.fv_nEnd   = this.fv_nNowPage * this.fv_nPageSize;
-    this.fv_nStart = this.fv_nEnd - this.fv_nPageSize + 1;
-
-    this.dsPrdt.copyData(this.ds_data0, true);
-    this.ds_data1.filter("COL0 >= " + this.fv_nStart + " && COL0 <= " + this.fv_nEnd);		   
-}
-
-/*
- * Function Name : fn_pageClick
- * Description   : 페이지 번호 클릭시 화면디스플레이 변경
- * Parameter     : 
- * Return        : 
- * Example       : fn_pageClick();
- */
-this.fn_pageClick = function(obj)
-{	
-    this.fv_nNowPage 	  = obj.userData;    
-    this.cmb_input2.set_value(this.fv_nNowPage);
-     
-	var nStartPage = Math.floor((Number(this.fv_nNowPage)-1) / Number(this.fv_nPageScale));
-	    nStartPage = (nStartPage * this.fv_nPageScale) + 1;
-	var nEndPage   = Number(nStartPage + this.fv_nPageScale);    
-
-	for (var i = nStartPage; i < nEndPage; i++ )
-	{
-        if (this.divPage.form.components["btn_"+i] == null)
-        {
-            break;
-        }
-      
-        this.divPage.form["btn_"+i].set_color("black");
-        this.divPage.form["btn_"+i].set_font("굴림,9");	
-	}
-    
-    obj.set_color("blue");
-    obj.set_font("굴림,9,bold");    
-
-	this.fn_Paging();
-};
-
-/*
- * Function Name : fn_pageChange
- * Description   : << , < , > , >> 버튼 클릭시 원본에서 filter 처리할수 있도록 함
- * Parameter     : 
- * Return        : 
- * Example       : fn_pageChange();
- */
-this.fn_pageChange = function(obj)
-{
-    this.fv_nNowPage = obj.userData;
-    this.fn_retrieve();    
-};
-
-/*
- * Function Name : fn_makePage
- * Description   : 페이징 처리 부분 동적생성
- * Parameter     : 
- * Return        : 
- * Example       : fn_makePage();
- */
-this.fn_makePage = function()
-{
-	if (this.components["divPage"] != null)
-	{
-		var objDelete = this.removeChild("divPage");
-		objDelete.destroy();
-	}
-
-	var objDiv = new Div;
-	objDiv.init("divPage",  85, 327, 330, 30, null, null);
-	this.addChild("divPage", objDiv);
-	objDiv.set_border("0px");
-	objDiv.show();
-
-	var nLeft   = 100;
-	var nWidth  = 20;
-	var nTop	= 5;
-
-	var nBottom = 25;	
-	var nTab	= 1;
-
-	if (Math.floor(this.fv_nTotCount % this.fv_nPageSize) > 0)
-	{
-		this.fv_nTotPage = Math.floor(this.fv_nTotCount / this.fv_nPageSize) + 1;
-	}
-	else
-	{
-		this.fv_nTotPage = Math.floor(this.fv_nTotCount / this.fv_nPageSize);
-	}
-
-	var nStartPage = Math.floor((Number(this.fv_nNowPage)-1) / Number(this.fv_nPageScale));
-	    nStartPage = (nStartPage * this.fv_nPageScale) + 1;
-	var nEndPage   = Number(nStartPage + this.fv_nPageScale);
-
-	for (var i = nStartPage; i < nEndPage ; i++)
-	{
-		if (i > this.fv_nTotPage)
-		{
-			break;   
-		}
-		nLeft -= 10;
-	}
-	
-	var objBtn = null;
-	// <<
-	objBtn = this.fn_getObjButton("first", nLeft, nTop, nWidth, nBottom, "1", "<<", 0);
-	if (nStartPage > this.fv_nPageScale)
-	{		
-		objBtn.addEventHandler("onclick", this.fn_pageChange, this);
-	}
-	else
-	{
-		objBtn.set_enable(false);
-	}
-	nLeft = nLeft + nWidth;
-
-	// <
-	objBtn = this.fn_getObjButton("before", nLeft, nTop, nWidth, nBottom, nStartPage-1, "<", nTab);
-	if (nStartPage > this.fv_nPageScale)
-	{
-		objBtn.addEventHandler("onclick", this.fn_pageChange, this);
-	}
-	else
-	{
-		objBtn.set_enable(false);
-	}
-	nLeft = nLeft + nWidth;
-
-	// Paging
-	for (var i = nStartPage ; i < nEndPage ; i++)
-	{		
-		nLeft = nLeft + nWidth;
-		if (i > this.fv_nTotPage)
-		{
-			break;
-		}
-		
-		var rtn = i;
-		rtn = rtn.toString();
-		
-		objBtn = this.fn_getObjButton("btn_"+i, nLeft, nTop, nWidth, nBottom, i, rtn, nTab);				
-		objBtn.addEventHandler("onclick", this.fn_pageClick, this);		
-		objBtn.set_border("0 none #808080ff");				
-				
-		if (i == this.fv_nNowPage)
-		{
-			objBtn.set_color("blue");
-			objBtn.set_font("Dotum,9,bold");
-		}
-		else
-		{
-			objBtn.set_color("Black");
-			objBtn.set_font("Dotum,9");
-		}
-	}
-	
-	if (i == nEndPage)
-	{
-		nLeft = nLeft + nWidth + nWidth;
-	}
-	else
-	{
-		nLeft = nLeft + nWidth;	
-	}
-	
-	// >
-	objBtn = this.fn_getObjButton("next", nLeft, nTop, nWidth, nBottom, nEndPage, ">", nTab);
-	if (nEndPage <= this.fv_nTotPage)
-	{
-		objBtn.addEventHandler("onclick", this.fn_pageChange, this);
-	}
-	else  
-	{
-		objBtn.set_enable(false);
-	}
-	nLeft = nLeft + nWidth;
-	
-	// >>
-	objBtn = this.fn_getObjButton("end", nLeft, nTop, nWidth, nBottom, this.fv_nTotPage, ">>", nTab);
-	if (nEndPage < this.fv_nTotPage)
-	{		
-		objBtn.addEventHandler("onclick", this.fn_pageChange, this);		
-	}
-	else
-	{
-		objBtn.set_enable(false);
-	}
-	nLeft = nLeft + nWidth;  
-	this.fn_setDisplay();	
-};
-
-/*
- * Function Name : fn_getObjButton
- * Description   : Button Create
- * Parameter     : ID, Left, Top, Width, Bottom, userData, Text, Tab
- * Return        : Button Object
- * Example       : fn_getObjButton();
- */
-this.fn_getObjButton = function(sId, nLeft, nTop, nWidth, nBottom, sData, sText, nTab)
-{
-	var objBtn = new Button;
-	objBtn.init(sId, nLeft, nTop, nWidth, nBottom, null, null);
-	objBtn.userData = sData;
-	objBtn.set_text(sText);	        
-	objBtn.set_taborder(nTab);
-	this.divPage.addChild(sId, objBtn);
-	objBtn.show();
-	return objBtn;
-};
-
-/*
- * Function Name : fn_setDisplay
- * Description   : Display
- * Parameter     : 
- * Return        : 
- * Example       : fn_setDisplay();
- */
-this.fn_setDisplay = function()
-{
-	if (this.fv_nTotCount > 0)
-	{
-		this.ds_data2.clearData();
-		for (var i = 1; i <= this.fv_nTotPage; i++)
-		{
-			this.ds_data2.addRow();
-			this.ds_data2.setColumn((i-1), "COL0", i);
-			this.ds_data2.setColumn((i-1), "COL1", i);
-		}
-			
-		this.sta_input0.set_visible(true);
-		this.sta_input1.set_visible(true);		
-		this.cmb_input0.set_visible(true);
-		this.cmb_input1.set_visible(true);
-	
-		this.cmb_input0.set_value(this.fv_nPageSize);		
-		this.cmb_input1.set_value(this.fv_nPageScale);		
-		this.sta_output0.set_visible(true);
-		this.sta_output1.set_visible(true);
-		this.sta_output1.set_text(this.fv_nTotCount);		
-		this.cmb_input2.set_visible(true);
-		this.cmb_input2.set_value(this.fv_nNowPage);			
-	}
-	else
-	{
-		this.sta_input0.set_visible(false);
-		this.sta_input1.set_visible(false);		
-		this.cmb_input0.set_visible(false);
-		this.cmb_input1.set_visible(false);		
-		this.sta_output0.set_visible(false);
-		this.sta_output1.set_visible(false);
-		this.cmb_input2.set_visible(false);
-	}
-};
-
+    }        
+} 
