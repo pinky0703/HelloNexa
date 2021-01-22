@@ -1,0 +1,323 @@
+/*
+ * File Name   : np_Grid_Format_Paging_filter.xfdl
+ * Description : Grid를 이용한 페이징처리1
+ */
+
+this.fv_nTotCount   = 0;	// 전체레코드수
+this.fv_nStart		= 1;   	// 시작 번호
+this.fv_nEnd		= 10;   // 끝 번호
+this.fv_nNowPage    = 1;   	// 현재 페이지
+this.fv_nPageSize	= 10;   // 한페이지 최대 레코드수
+this.fv_nPageScale	= 10;	// 화면 최대 페이지수
+this.fv_nTotPage    = 0;	// 전체페이지수
+
+/*  버튼클릭  */
+this.btn_execute_onclick = function(obj:Button,  e:nexacro.ClickEventInfo)
+{		
+    this.ds_data0.filter("");
+    this.fv_nNowPage = 1;
+    this.fv_nTotCount  = this.ds_data0.getRowCount();	// 전체레코드수
+
+    
+    this.fn_retrieve();
+};
+
+/*  onitemchanged - 한페이지 최대 레코드수 */
+this.cmb_input0_onitemchanged = function(obj:Combo, e:nexacro.ItemChangeEventInfo)
+{
+	this.fv_nPageSize = Number(this.cmb_input0.value);  	
+}
+
+/*  onitemchanged -화면 최대 페이지수  */
+this.cmb_input1_onitemchanged = function(obj:Combo, e:nexacro.ItemChangeEventInfo)
+{
+	this.fv_nPageScale = Number(this.cmb_input1.value);	
+}
+
+/*  onitemchanged  - 페이지 선택*/
+this.cmb_input2_onitemchanged = function(obj:Combo, e:nexacro.ItemChangeEventInfo)
+{
+	this.fv_nNowPage  =  this.cmb_input2.value;
+    this.fn_retrieve();
+};
+
+/*
+ * Function Name : fn_retrieve
+ * Description   : 서버에서 조회한것처럼 원본에서 filter 처리
+ * Parameter     : 
+ * Return        : 
+ * Example       : fn_retrieve();
+ */
+this.fn_retrieve = function()
+{			
+    var nStrat = parseInt((this.fv_nNowPage - 1) / this.fv_nPageScale) * (this.fv_nPageScale * this.fv_nPageSize) + 1;
+    var nEnd   = parseInt((this.fv_nNowPage - 1) / this.fv_nPageScale) * (this.fv_nPageScale * this.fv_nPageSize) + (this.fv_nPageScale * this.fv_nPageSize);
+
+    this.ds_data0.filter("COL0 >= " + nStrat + " && COL0 <= " + nEnd);				
+
+    this.fn_makePage();	
+    this.fn_Paging();            
+};
+
+/*
+ * Function Name : fn_Paging
+ * Description   : 페이지 번호 클릭시 filter 처리
+ * Parameter     : 
+ * Return        : 
+ * Example       : fn_Paging();
+ */
+this.fn_Paging = function()
+{
+    this.fv_nEnd   = this.fv_nNowPage * this.fv_nPageSize;
+    this.fv_nStart = this.fv_nEnd - this.fv_nPageSize + 1;
+
+    this.ds_data1.copyData(this.ds_data0, true);
+    this.ds_data1.filter("COL0 >= " + this.fv_nStart + " && COL0 <= " + this.fv_nEnd);		   
+}
+
+/*
+ * Function Name : fn_pageClick
+ * Description   : 페이지 번호 클릭시 화면디스플레이 변경
+ * Parameter     : 
+ * Return        : 
+ * Example       : fn_pageClick();
+ */
+this.fn_pageClick = function(obj)
+{	
+    this.fv_nNowPage 	  = obj.userData;    
+    this.cmb_input2.set_value(this.fv_nNowPage);
+     
+	var nStartPage = Math.floor((Number(this.fv_nNowPage)-1) / Number(this.fv_nPageScale));
+	    nStartPage = (nStartPage * this.fv_nPageScale) + 1;
+	var nEndPage   = Number(nStartPage + this.fv_nPageScale);    
+
+	for (var i = nStartPage; i < nEndPage; i++ )
+	{
+        if (this.divPage.form.components["btn_"+i] == null)
+        {
+            break;
+        }
+      
+        this.divPage.form["btn_"+i].set_color("black");
+        this.divPage.form["btn_"+i].set_font("굴림,9");	
+	}
+    
+    obj.set_color("blue");
+    obj.set_font("굴림,9,bold");    
+
+	this.fn_Paging();
+};
+
+/*
+ * Function Name : fn_pageChange
+ * Description   : << , < , > , >> 버튼 클릭시 원본에서 filter 처리할수 있도록 함
+ * Parameter     : 
+ * Return        : 
+ * Example       : fn_pageChange();
+ */
+this.fn_pageChange = function(obj)
+{
+    this.fv_nNowPage = obj.userData;
+    this.fn_retrieve();    
+};
+
+/*
+ * Function Name : fn_makePage
+ * Description   : 페이징 처리 부분 동적생성
+ * Parameter     : 
+ * Return        : 
+ * Example       : fn_makePage();
+ */
+this.fn_makePage = function()
+{
+	if (this.components["divPage"] != null)
+	{
+		var objDelete = this.removeChild("divPage");
+		objDelete.destroy();
+	}
+
+	var objDiv = new Div;
+	objDiv.init("divPage",  85, 327, 330, 30, null, null);
+	this.addChild("divPage", objDiv);
+	objDiv.set_border("0px");
+	objDiv.show();
+
+	var nLeft   = 100;
+	var nWidth  = 20;
+	var nTop	= 5;
+
+	var nBottom = 25;	
+	var nTab	= 1;
+
+	if (Math.floor(this.fv_nTotCount % this.fv_nPageSize) > 0)
+	{
+		this.fv_nTotPage = Math.floor(this.fv_nTotCount / this.fv_nPageSize) + 1;
+	}
+	else
+	{
+		this.fv_nTotPage = Math.floor(this.fv_nTotCount / this.fv_nPageSize);
+	}
+
+	var nStartPage = Math.floor((Number(this.fv_nNowPage)-1) / Number(this.fv_nPageScale));
+	    nStartPage = (nStartPage * this.fv_nPageScale) + 1;
+	var nEndPage   = Number(nStartPage + this.fv_nPageScale);
+
+	for (var i = nStartPage; i < nEndPage ; i++)
+	{
+		if (i > this.fv_nTotPage)
+		{
+			break;   
+		}
+		nLeft -= 10;
+	}
+	
+	var objBtn = null;
+	// <<
+	objBtn = this.fn_getObjButton("first", nLeft, nTop, nWidth, nBottom, "1", "<<", 0);
+	if (nStartPage > this.fv_nPageScale)
+	{		
+		objBtn.addEventHandler("onclick", this.fn_pageChange, this);
+	}
+	else
+	{
+		objBtn.set_enable(false);
+	}
+	nLeft = nLeft + nWidth;
+
+	// <
+	objBtn = this.fn_getObjButton("before", nLeft, nTop, nWidth, nBottom, nStartPage-1, "<", nTab);
+	if (nStartPage > this.fv_nPageScale)
+	{
+		objBtn.addEventHandler("onclick", this.fn_pageChange, this);
+	}
+	else
+	{
+		objBtn.set_enable(false);
+	}
+	nLeft = nLeft + nWidth;
+
+	// Paging
+	for (var i = nStartPage ; i < nEndPage ; i++)
+	{		
+		nLeft = nLeft + nWidth;
+		if (i > this.fv_nTotPage)
+		{
+			break;
+		}
+		
+		var rtn = i;
+		rtn = rtn.toString();
+		
+		objBtn = this.fn_getObjButton("btn_"+i, nLeft, nTop, nWidth, nBottom, i, rtn, nTab);				
+		objBtn.addEventHandler("onclick", this.fn_pageClick, this);		
+		objBtn.set_border("0 none #808080ff");				
+				
+		if (i == this.fv_nNowPage)
+		{
+			objBtn.set_color("blue");
+			objBtn.set_font("Dotum,9,bold");
+		}
+		else
+		{
+			objBtn.set_color("Black");
+			objBtn.set_font("Dotum,9");
+		}
+	}
+	
+	if (i == nEndPage)
+	{
+		nLeft = nLeft + nWidth + nWidth;
+	}
+	else
+	{
+		nLeft = nLeft + nWidth;	
+	}
+	
+	// >
+	objBtn = this.fn_getObjButton("next", nLeft, nTop, nWidth, nBottom, nEndPage, ">", nTab);
+	if (nEndPage <= this.fv_nTotPage)
+	{
+		objBtn.addEventHandler("onclick", this.fn_pageChange, this);
+	}
+	else  
+	{
+		objBtn.set_enable(false);
+	}
+	nLeft = nLeft + nWidth;
+	
+	// >>
+	objBtn = this.fn_getObjButton("end", nLeft, nTop, nWidth, nBottom, this.fv_nTotPage, ">>", nTab);
+	if (nEndPage < this.fv_nTotPage)
+	{		
+		objBtn.addEventHandler("onclick", this.fn_pageChange, this);		
+	}
+	else
+	{
+		objBtn.set_enable(false);
+	}
+	nLeft = nLeft + nWidth;  
+	this.fn_setDisplay();	
+};
+
+/*
+ * Function Name : fn_getObjButton
+ * Description   : Button Create
+ * Parameter     : ID, Left, Top, Width, Bottom, userData, Text, Tab
+ * Return        : Button Object
+ * Example       : fn_getObjButton();
+ */
+this.fn_getObjButton = function(sId, nLeft, nTop, nWidth, nBottom, sData, sText, nTab)
+{
+	var objBtn = new Button;
+	objBtn.init(sId, nLeft, nTop, nWidth, nBottom, null, null);
+	objBtn.userData = sData;
+	objBtn.set_text(sText);	        
+	objBtn.set_taborder(nTab);
+	this.divPage.addChild(sId, objBtn);
+	objBtn.show();
+	return objBtn;
+};
+
+/*
+ * Function Name : fn_setDisplay
+ * Description   : Display
+ * Parameter     : 
+ * Return        : 
+ * Example       : fn_setDisplay();
+ */
+this.fn_setDisplay = function()
+{
+	if (this.fv_nTotCount > 0)
+	{
+		this.ds_data2.clearData();
+		for (var i = 1; i <= this.fv_nTotPage; i++)
+		{
+			this.ds_data2.addRow();
+			this.ds_data2.setColumn((i-1), "COL0", i);
+			this.ds_data2.setColumn((i-1), "COL1", i);
+		}
+			
+		this.sta_input0.set_visible(true);
+		this.sta_input1.set_visible(true);		
+		this.cmb_input0.set_visible(true);
+		this.cmb_input1.set_visible(true);
+	
+		this.cmb_input0.set_value(this.fv_nPageSize);		
+		this.cmb_input1.set_value(this.fv_nPageScale);		
+		this.sta_output0.set_visible(true);
+		this.sta_output1.set_visible(true);
+		this.sta_output1.set_text(this.fv_nTotCount);		
+		this.cmb_input2.set_visible(true);
+		this.cmb_input2.set_value(this.fv_nNowPage);			
+	}
+	else
+	{
+		this.sta_input0.set_visible(false);
+		this.sta_input1.set_visible(false);		
+		this.cmb_input0.set_visible(false);
+		this.cmb_input1.set_visible(false);		
+		this.sta_output0.set_visible(false);
+		this.sta_output1.set_visible(false);
+		this.cmb_input2.set_visible(false);
+	}
+};
